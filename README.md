@@ -67,7 +67,7 @@ Additionally, the return value can be a result descriptor or an array of result 
 
 Key			| Description
 ------------|--------------------------------------------------------------------
-`$returns` 	| A (single) return value. Can be any value.
+`$returns` 	| A (single) return value. Can be any value (including `null`).
 `$results`	| An array of return values, which are returned in subsequent calls.
 `$callback`	| A function to be called when the mocked function is called.
 `$args`		| An array of arguments to match. Only when the arguments match, does the method return the value (specified in `$returns`, `$results` or `$callback`).
