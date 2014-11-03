@@ -10,11 +10,11 @@ In your TestBox bundle, create a Mocktory instance:
 
 	mocktory = new Mocktory($mockbox);
 
-To create a mock create a descriptor, which is just a struct with some special keys prepended with `$`. Then call `.mock`:
+First reate a descriptor, which is just a struct with some special keys that describes the object and what to mock. Then call `.mock`:
 
 	mock = mocktory.mock(descriptor);
 
-If the descriptor contains verifier keys (see below), you can also verify that all methods (with verifiers) are called as specified:
+If the descriptor contains verifier keys, you can also verify that the methods (with verifiers) are called as specified:
 
 	mocktory.verify(mock);
 
@@ -66,19 +66,18 @@ The return value can be any value. This extended example will make this clear:
 Additionally, the return value can be a result descriptor or an array of result descriptors. A result descriptor is another struct with some special `$` prepended keys that are used for mocking functions and for verifying mocks. The mocking keys:
 
 Key			| Description
----------------------------------------------------------------------------------
+------------|--------------------------------------------------------------------
 `$returns` 	| A (single) return value. Can be any value.
 `$results`	| An array of return values, which are returned in subsequent calls.
 `$callback`	| A function to be called when the mocked function is called.
 `$args`		| An array of arguments to match. Only when the arguments match, does the method return the value (specified in `$returns`, `$results` or `$callback`).
 
-Except `$returns`, which does not exist with MockBox, these keys map to the corresponding method on the mock object. `$returns` exists to differentiate
-between a function that returns an array and one that iterates over values in an array.
+One of `$returns`, `$results` or `$callback` is required. Except `$returns`, which does not exist with MockBox, these keys map to the corresponding method on the mock object. `$returns` exists to differentiate between a function that returns an array and one that iterates over values in an array.
 
 To verify that a method is called a certain number of times, add one of the following keys to the descriptor:
 
 Key			| Description
----------------------------------------------------------------------------------
+------------|--------------------------------------------------------------------
 `$times`	| Verifies that the method is called the given number of times.
 `$atLeast`	| Verifies that the method is called at least the given number of times.
 `$atMost`	| Verifies that the method is called at most the given number of times.
@@ -88,9 +87,7 @@ Accepted values for these keys are single numbers, and for `$between` an array o
 Additionally, an array of the value(s) and a message string is allowed. See below for an example.
 
 Mocktory uses the assertion library included with TestBox, so if an assertion fails, the test immediately fails.
-The names of the keys match MockBox methods, but these methods are not used because MockBox does not
-take arguments into account. With MockBox, `mock.$count("method")` returns the number of times that `method` is
-called, regardless of the arguments.
+The names of the keys match MockBox methods, but these methods are not used because MockBox does not take arguments into account. With MockBox, `mock.$count("method")` returns the number of times that `method` is called, regardless of the arguments.
 
 Example mock descriptor with result descriptors:
 
@@ -111,7 +108,10 @@ Example mock descriptor with result descriptors:
 				$returns: 20000,
 				$atMost: 2
 			}
-		]
+		],
+		isNerd: {
+			$results: [true, false]		// Rotate these return values.
+		}
 	}
 
 Installation
