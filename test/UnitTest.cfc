@@ -18,6 +18,12 @@ component extends="testbox.system.BaseSpec" {
 				expect(mocktory.isMockDescriptor({$class: "class", $object: "object"})).toBeTrue();
 			});
 
+			it(".isMockDescriptor should return false if the struct is an object", function () {
+				var object = new Stub();
+				object.$class = "Stub";
+				expect(mocktory.isMockDescriptor(object)).toBeFalse();
+			});
+
 			it(".isResultDesciptor should return true if the struct contains $results, $callback or $returns", function () {
 				expect(mocktory.isResultDescriptor({})).toBeFalse();
 				expect(mocktory.isResultDescriptor({someKey: "value"})).toBeFalse();
@@ -26,6 +32,12 @@ component extends="testbox.system.BaseSpec" {
 				expect(mocktory.isResultDescriptor({$callback: "callback"})).toBeTrue();
 				expect(mocktory.isResultDescriptor({$returns: "returns"})).toBeTrue();
 				expect(mocktory.isResultDescriptor({$returns: JavaCast("null", 0)})).toBeTrue();
+			});
+
+			it(".isResultDescriptor should return false if the struct is an object", function () {
+				var object = new Stub();
+				object.$returns = "Stub";
+				expect(mocktory.isResultDescriptor(object)).toBeFalse();
 			});
 
 			describe("when mocking objects", function () {
@@ -374,7 +386,6 @@ component extends="testbox.system.BaseSpec" {
 				});
 
 			});
-
 
 		});
 

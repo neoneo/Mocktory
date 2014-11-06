@@ -134,12 +134,12 @@ component {
 	}
 
 	public Boolean function isMockDescriptor(required Struct descriptor) {
-		return arguments.descriptor.keyExists("$object") || arguments.descriptor.keyExists("$class");
+		return !IsObject(arguments.descriptor) && (arguments.descriptor.keyExists("$object") || arguments.descriptor.keyExists("$class"));
 	}
 
 	public Boolean function isResultDescriptor(required Struct descriptor) {
 		// We want to be able to return null, so we can't use StructKeyExists for $returns.
-		return arguments.descriptor.keyExists("$results") || arguments.descriptor.keyExists("$callback") || arguments.descriptor.keyArray().find("$returns") > 0;
+		return !IsObject(arguments.descriptor) && (arguments.descriptor.keyExists("$results") || arguments.descriptor.keyExists("$callback") || arguments.descriptor.keyArray().find("$returns") > 0);
 	}
 
 	private Boolean function isFunction(required Any object, required String name) {
@@ -177,7 +177,7 @@ component {
 				local.mockObject = arguments.mockObject;
 				mockDescriptor[key].each(function (descriptor) {
 					var functionName = this.isFunction(mockObject, key) ? key : "get" & key;
-					var count = this.callCount(callLog, functionName, resultDescriptor.$args ?: []);
+					var count = this.callCount(callLog, functionName, arguments.descriptor.$args ?: []);
 					// Test for existence of one of the comparison types. The values are arrays of comparison values and messages.
 					if (arguments.descriptor.keyExists("$times")) {
 						assert.isEqual(arguments.descriptor.$times[1], count, arguments.descriptor.$times[2]);
