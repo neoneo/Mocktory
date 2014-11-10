@@ -28,7 +28,8 @@ component {
 		}
 
 		var object = mockDescriptor.keyExists("$object") ?
-			this.mockFactory.prepareMock(mockDescriptor.$object) :
+			// If the object is already a mock, don't mock again.
+			StructKeyExists(mockDescriptor.$object, "mockBox") ? mockDescriptor.$object : this.mockFactory.prepareMock(mockDescriptor.$object) :
 			this.mockFactory.createMock(mockDescriptor.$class);
 
 		for (var key in mockDescriptor) {
