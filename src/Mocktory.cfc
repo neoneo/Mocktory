@@ -33,9 +33,6 @@ component {
 
 		for (var key in mockDescriptor) {
 			if (key != "$object" && key != "$class") {
-				// Find out if this is a function or a property (where we assume a getter has to be mocked).
-				var functionName = this.isFunction(object, key) ? key : "get" & key;
-
 				/*
 					Determine the value to be returned from the mocked function.
 					We have the following cases:
@@ -91,6 +88,9 @@ component {
 					descriptors.append({$returns: result});
 				}
 
+				// Find out if this is a function or a property (where we assume a getter has to be mocked).
+				var functionName = this.isFunction(object, key) ? key : "get" & key;
+
 				// Overwrite the key, so that we always have an array of result descriptors.
 				mockDescriptor[key] = descriptors.map(function (descriptor) {
 					// Convert comparison values to arrays (if necessary) and make sure the last item is a message.
@@ -143,8 +143,8 @@ component {
 	}
 
 	private Boolean function isFunction(required Any object, required String name) {
-		// TODO: Using StructKeyExists will invoke the function if invokeImplicitAccessors = true. Implement workaround.
-		return StructKeyExists(object, arguments.name) && IsCustomFunction(object[arguments.name]);
+		// Using StructKeyExists will invoke the function if invokeImplicitAccessor = true. That would increase the call count.
+		return StructKeyArray(arguments.object).findNoCase(arguments.name) > 0 && IsCustomFunction(object[arguments.name]);
 	}
 
 	private void function mockFunction(required Any object, required String name, required Struct descriptor) {
