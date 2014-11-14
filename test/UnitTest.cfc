@@ -52,20 +52,20 @@ component extends="testbox.system.BaseSpec" {
 
 				beforeEach(function () {
 					mockboxMock.$("createMock").$callback(function () {
-						var mock = $mockbox.createMock("mocktorytest.Stub");
+						var mock = $mockbox.createMock("test.Stub");
 						mockmock(mock);
 
 						return mock;
 					});
 					mockboxMock.$("prepareMock").$callback(function () {
-						var mock = $mockbox.createMock("mocktorytest.Stub");
+						var mock = $mockbox.createMock("test.Stub");
 						mockmock(mock);
 
 						return mock;
 					});
 				})
 
-				it(".mock should throw an exception if the descriptor is invalid", function () {
+				it(".mock should throw IllegalArgumentException if the descriptor is invalid", function () {
 					descriptor = {string: "string"}
 
 					expect(function () {
@@ -103,7 +103,7 @@ component extends="testbox.system.BaseSpec" {
 
 				it(".mock should set empty assertion messages if not defined", function () {
 					descriptor = {
-						$class: "mocktorytest.Stub",
+						$class: "test.Stub",
 						existingMethod: {
 							$returns: "value",
 							$atLeast: [1, "at least"],
@@ -139,7 +139,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should create them on the mock object", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								property: "value"
 							}
 
@@ -153,7 +153,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should mock getters if there is no function by the given key", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								property: "value"
 							}
 
@@ -166,7 +166,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should mock the function if there exists a function by the given key", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								existingMethod: "value"
 							}
 
@@ -179,7 +179,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should create result descriptors for simple values", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								property: "value"
 							}
 
@@ -192,7 +192,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should mock functions that return null / void", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								voidMethod: JavaCast("null", 0)
 							}
 
@@ -205,7 +205,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should mock functions based on a given result descriptor", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								existingMethod: {
 									$returns: "value"
 								}
@@ -220,7 +220,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should mock multiple function calls based on an array of result descriptors", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								existingMethod: [
 									{$returns: "value1"},
 									{$returns: "value2"}
@@ -241,7 +241,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should mock a single result with the $returns key", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								existingMethod: {
 									$returns: "one"
 								}
@@ -258,7 +258,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should mock multiple results with the $results key", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								existingMethod: {
 									$results: ["one", "two"]
 								}
@@ -275,7 +275,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should mock a callback using the $callback key", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								existingMethod: {
 									$callback: function () {
 										return "one";
@@ -294,7 +294,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should set arguments with the $args key", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								existingMethod: {
 									$returns: "one",
 									$args: [1]
@@ -316,7 +316,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should set a single return value if the value is an array of something other than result descriptors", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								property: [1, 2, 3]
 							}
 
@@ -331,7 +331,7 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should set a single return value if the value is a struct that is not a result descriptor", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								property: {a: 1, b: 2}
 							}
 
@@ -346,9 +346,9 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should set a mock object as return value if the value is a mock descriptor", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								property: {
-									$class: "mocktorytest.Stub"
+									$class: "test.Stub"
 								}
 							}
 
@@ -363,10 +363,10 @@ component extends="testbox.system.BaseSpec" {
 
 						it("should set an array of mock objects as return value if the value is an array of mock descriptors", function () {
 							descriptor = {
-								$class: "mocktorytest.Stub",
+								$class: "test.Stub",
 								property: [
-									{$class: "mocktorytest.Stub"},
-									{$class: "mocktorytest.Stub"}
+									{$class: "test.Stub"},
+									{$class: "test.Stub"}
 								]
 							}
 

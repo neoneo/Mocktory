@@ -5,8 +5,7 @@ component extends="testbox.system.BaseSpec" {
 		describe("Mocktory", function () {
 
 			beforeEach(function () {
-				mockbox = new testbox.system.MockBox();
-				mocktory = new mocktory.Mocktory(mockbox);
+				mocktory = new mocktory.Mocktory($mockbox);
 			});
 
 			describe("creating mocks", function () {
@@ -14,7 +13,7 @@ component extends="testbox.system.BaseSpec" {
 				it("for descriptors without result descriptors", function () {
 
 					descriptor = {
-						$class: "mocktorytest.Stub",
+						$class: "test.Stub",
 						numeric: 1,
 						string: "string",
 						date: CreateDate(2000, 1, 1),
@@ -22,7 +21,7 @@ component extends="testbox.system.BaseSpec" {
 						struct: {a: 1, b: 2},
 						array: [1, 2],
 						stub: {
-							$class: "mocktorytest.Stub",
+							$class: "test.Stub",
 							id: RandRange(1, 1000)
 						}
 					}
@@ -45,7 +44,7 @@ component extends="testbox.system.BaseSpec" {
 
 					var id = RandRange(1, 1000);
 					descriptor = {
-						$class: "mocktorytest.Stub",
+						$class: "test.Stub",
 						returns: {$returns: "string"},
 						results: {$results: [1, 2]},
 						callback: {
@@ -68,7 +67,7 @@ component extends="testbox.system.BaseSpec" {
 
 				it("for descriptors with result descriptors with arguments", function () {
 					var descriptor = {
-						$class: "mocktorytest.Stub",
+						$class: "test.Stub",
 						existingMethod: [
 							{
 								$args: [1],
@@ -93,7 +92,7 @@ component extends="testbox.system.BaseSpec" {
 
 				it("should assert the number of calls is equal to $times", function () {
 					var descriptor = {
-						$class: "mocktorytest.Stub",
+						$class: "test.Stub",
 						twice: {
 							$returns: 1,
 							$times: 2
@@ -114,7 +113,7 @@ component extends="testbox.system.BaseSpec" {
 
 				it("should assert the number of calls is at least $atLeast", function () {
 					var descriptor = {
-						$class: "mocktorytest.Stub",
+						$class: "test.Stub",
 						twice: {
 							$returns: 1,
 							$atLeast: 2
@@ -135,7 +134,7 @@ component extends="testbox.system.BaseSpec" {
 
 				it("should assert the number of calls is at most $atMost", function () {
 					var descriptor = {
-						$class: "mocktorytest.Stub",
+						$class: "test.Stub",
 						twice: {
 							$returns: 1,
 							$atMost: 3
@@ -156,7 +155,7 @@ component extends="testbox.system.BaseSpec" {
 
 				it("should assert the number of calls is between the values specified in $between", function () {
 					var descriptor = {
-						$class: "mocktorytest.Stub",
+						$class: "test.Stub",
 						twice: {
 							$returns: 1,
 							$between: [2, 3]
@@ -176,16 +175,99 @@ component extends="testbox.system.BaseSpec" {
 					verifyShouldFail(mock);
 				});
 
+				describe("with another mock descriptor", function () {
+
+					it("should override existing descriptors", function () {
+						// Create a descriptor with a verification, and override it in the verify call.
+						var descriptor = {
+							$class: "test.Stub",
+							twice: {
+								$returns: 1,
+								$times: 2
+							}
+						}
+						var result = {
+							twice: {
+								$times: 1
+							}
+						}
+
+						mock = mocktory.mock(descriptor);
+						mock.getTwice();
+
+						mocktory.verify(mock, result);
+
+						mock.getTwice();
+						verifyShouldFail(mock, result);
+					});
+
+					it("should append to existing descriptors", function () {
+						var descriptor = {
+							$class: "test.Stub",
+							once: 1,
+							twice: 2
+						}
+						var result = {
+							once: {
+								$times: 1
+							},
+							twice: {
+								$times: 2
+							}
+						}
+
+						mock = mocktory.mock(descriptor)
+
+						mock.getTwice();
+						verifyShouldFail(mock, result);
+
+						mock.getTwice();
+						verifyShouldFail(mock, result);
+
+						mock.getOnce();
+						mocktory.verify(mock, result);
+					});
+
+					it("should verify mocks created with MockBox", function () {
+						mock = createMock("test.Stub");
+						mock.$("getOnce", 1);
+
+						var result = {
+							// This time also test with arguments.
+							once: [
+								{
+									$args: [1],
+									$times: 1
+								},
+								{
+									$args: [2],
+									$times: 1
+								}
+							]
+						}
+
+						mock.getOnce(1);
+						verifyShouldFail(mock, result);
+
+						mock.getOnce(2);
+						mocktory.verify(mock, result);
+					});
+
+				});
+
 			});
 
 		});
 
-
 	}
 
-	function verifyShouldFail(mock) {
+	function verifyShouldFail(mock, descriptor) {
 		try {
-			mocktory.verify(arguments.mock);
+			if (IsNull(arguments.descriptor)) {
+				mocktory.verify(arguments.mock);
+			} else {
+				mocktory.verify(arguments.mock, arguments.descriptor)
+			}
 			fail("an assertion should have failed");
 		} catch (TestBox.AssertionFailed e) {}
 	}
