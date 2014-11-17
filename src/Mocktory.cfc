@@ -20,7 +20,7 @@ component {
 		this.mockFactory = arguments.mockFactory;
 		this.assert = new Assertion();
 		this.expand = arguments.expand ?: function (name) {
-			return name;
+			return arguments.name;
 		}
 	}
 
