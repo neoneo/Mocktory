@@ -175,6 +175,32 @@ component extends="testbox.system.BaseSpec" {
 					verifyShouldFail(mock);
 				});
 
+				it("should compare the arguments to the $args specified in the result descriptors", function () {
+					var descriptor = {
+						$class: "test.Stub",
+						twice: [
+							{
+								$args: [1],
+								$returns: 1,
+								$times: 1
+							},
+							{
+								$args: [2],
+								$returns: 2,
+								$times: 1
+							}
+						]
+					}
+
+					mock = mocktory.mock(descriptor);
+
+					mock.getTwice(1);
+					verifyShouldFail(mock);
+					mock.getTwice(2);
+
+					mocktory.verify(mock);
+				});
+
 				describe("with another mock descriptor", function () {
 
 					it("should override existing descriptors", function () {
@@ -228,7 +254,7 @@ component extends="testbox.system.BaseSpec" {
 						mocktory.verify(mock, result);
 					});
 
-					it("should verify mocks created with MockBox", function () {
+					it("should verify mocks created directly with MockBox", function () {
 						mock = createMock("test.Stub");
 						mock.$("getOnce", 1);
 
@@ -251,6 +277,35 @@ component extends="testbox.system.BaseSpec" {
 
 						mock.getOnce(2);
 						mocktory.verify(mock, result);
+					});
+
+					it("should count the total number of calls if no $args is specified", function () {
+						var descriptor = {
+							$class: "test.Stub",
+							twice: [
+								{
+									$args: [1],
+									$returns: 1,
+									$times: 1
+								},
+								{
+									$args: [2],
+									$returns: 2,
+									$times: 1
+								}
+							]
+						}
+
+						mock = mocktory.mock(descriptor);
+
+						mock.getTwice(1);
+						mock.getTwice(2);
+
+						mocktory.verify(mock, {
+							twice: {
+								$times: 2
+							}
+						});
 					});
 
 				});

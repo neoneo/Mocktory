@@ -406,6 +406,23 @@ component extends="testbox.system.BaseSpec" {
 							});
 						});
 
+						it("should set a callback if the value is a custom function or a closure", function () {
+							descriptor = {
+								$class: "test.Stub",
+								property: function () {
+									return true;
+								}
+							}
+
+							var mock = mocktory.mock(descriptor);
+
+							var callLog = mock.$callLog();
+							expect(mock.$count("$")).toBe(1);
+							expect(callLog.$[1][1]).toBe("getproperty");
+							expect(mock.$count("$callback")).toBe(1);
+							expect(IsClosure(callLog.$callback[1][1])).toBeTrue();
+						});
+
 					});
 
 				});
