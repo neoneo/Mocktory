@@ -516,6 +516,15 @@ component extends="testbox.system.BaseSpec" {
 
 			describe("comparing", function () {
 
+				describe("nulls" , function () {
+
+					it("should compare only if both values are null", function () {
+						expect(mocktory.isEqual(JavaCast("null", 0), JavaCast("null", 0))).toBeTrue();
+						expect(mocktory.isEqual(JavaCast("null", 0), "")).toBeFalse();
+					});
+
+				});
+
 				describe("simple values", function () {
 
 					it("should compare strings without case", function () {

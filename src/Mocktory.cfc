@@ -284,6 +284,12 @@ component {
 
 	public Boolean function isEqual(required Any value1, required Any value2) {
 
+		if (IsNull(arguments.value1) && IsNull(arguments.value2)) {
+			return true;
+		} else if (IsNull(arguments.value1) || IsNull(arguments.value2)) {
+			return false;
+		}
+
 		local.value1 = arguments.value1;
 		local.value2 = arguments.value2;
 
