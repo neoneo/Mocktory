@@ -429,7 +429,7 @@ component extends="testbox.system.BaseSpec" {
 
 			});
 
-			describe("with expand mapping closure", function () {
+			describe("initialized with a closure to turn names into component mappings", function () {
 
 				beforeEach(function () {
 					var mock = $mockbox.createMock("test.Stub");
@@ -462,8 +462,240 @@ component extends="testbox.system.BaseSpec" {
 
 			});
 
-		});
+			describe("counting calls", function () {
 
+				beforeEach(function () {
+					mock = $mockbox.createMock("test.Stub");
+					mock.$("voidMethod");
+				});
+
+				describe("without $args", function () {
+
+					it("should count the calls regardless of arguments used", function () {
+						expect(mocktory.callCount(mock, "voidMethod")).toBe(0);
+
+						mock.voidMethod(1);
+						mock.voidMethod(2);
+						mock.voidMethod(3, "something");
+
+						expect(mocktory.callCount(mock, "voidMethod")).toBe(3);
+					});
+
+				});
+
+				describe("with $args", function () {
+
+					beforeEach(function () {
+						// Mock the isEqual method for just simple values.
+						mock.$callback("isEqual", function (value1, value2) {
+							return arguments.value1 == arguments.value2;
+						});
+					});
+
+					it("should count the calls per set of arguments", function () {
+						mock.voidMethod(1);
+						mock.voidMethod(2);
+						mock.voidMethod(2);
+						mock.voidMethod(3, "something");
+						mock.voidMethod(3, "something");
+						mock.voidMethod(3, "something");
+
+						expect(mocktory.callCount(mock, "voidMethod", [1])).toBe(1);
+						expect(mocktory.callCount(mock, "voidMethod", [2])).toBe(2);
+						expect(mocktory.callCount(mock, "voidMethod", [3, "something"])).toBe(3);
+						expect(mocktory.callCount(mock, "voidMethod", [3])).toBe(0);
+
+						expect(mocktory.callCount(mock, "voidMethod", [])).toBe(0);
+						expect(mocktory.callCount(mock, "voidMethod")).toBe(6);
+
+					});
+
+				});
+
+			});
+
+			describe("comparing", function () {
+
+				describe("simple values", function () {
+
+					it("should compare strings without case", function () {
+						expect(mocktory.isEqual("a", "a")).toBeTrue();
+						expect(mocktory.isEqual("a", "A")).toBeTrue();
+						expect(mocktory.isEqual("a", "b")).toBeFalse();
+					});
+
+					it("should compare numeric values", function () {
+						expect(mocktory.isEqual(1, 1)).toBeTrue();
+						expect(mocktory.isEqual(1, "1")).toBeTrue();
+						expect(mocktory.isEqual(0.1, ".1")).toBeTrue();
+						expect(mocktory.isEqual(1, 2)).toBeFalse();
+					});
+
+					it("should compare dates", function () {
+						var date1 = Now();
+						var date2 = Duplicate(Now());
+
+						expect(mocktory.isEqual(date1, date2)).toBeTrue();
+						expect(mocktory.isEqual(date1, date2.add("s", 1))).toBeFalse();
+					});
+
+					it("should compare boolean values", function () {
+						expect(mocktory.isEqual(true, true)).toBeTrue();
+						expect(mocktory.isEqual(false, false)).toBeTrue();
+						expect(mocktory.isEqual(true, 1)).toBeTrue();
+						expect(mocktory.isEqual(false, 0)).toBeTrue();
+						expect(mocktory.isEqual(true, "true")).toBeTrue();
+						expect(mocktory.isEqual(false, "false")).toBeTrue();
+						expect(mocktory.isEqual(true, "yes")).toBeTrue();
+						expect(mocktory.isEqual(false, "no")).toBeTrue();
+						expect(mocktory.isEqual("yes", true)).toBeTrue();
+						expect(mocktory.isEqual("no", false)).toBeTrue();
+
+						expect(mocktory.isEqual("foo", true)).toBeFalse();
+						expect(mocktory.isEqual("", false)).toBeFalse();
+					});
+
+				});
+
+				describe("objects", function () {
+
+					it("should compare instances", function () {
+						var stub1 = new test.Stub();
+						var stub2 = new test.Stub();
+
+						expect(mocktory.isEqual(stub1, stub1)).toBeTrue();
+						expect(mocktory.isEqual(stub1, stub2)).toBeFalse();
+					});
+
+				});
+
+				describe("structs", function () {
+
+					it("should compare empty structs", function () {
+						expect(mocktory.isEqual({}, {})).toBeTrue();
+					});
+
+					it("should compare simple contents", function () {
+						var struct1 = {a: 1, b: 2, c: 3}
+						var struct2 = Duplicate(struct1);
+
+						expect(mocktory.isEqual(struct1, struct2)).toBeTrue();
+
+						struct2.d = 4;
+						expect(mocktory.isEqual(struct1, struct2)).toBeFalse();
+
+						struct1.d = 4;
+						expect(mocktory.isEqual(struct1, struct2)).toBeTrue();
+
+						struct1.delete("a");
+						expect(mocktory.isEqual(struct1, struct2)).toBeFalse();
+					});
+
+					it("should compare deep contents", function () {
+						var struct1 = {
+							a: 1,
+							b: {
+								p: 2,
+								q: 3,
+								r: {
+									x: 4,
+									y: 5,
+									z: {}
+								}
+							},
+							c: 6
+						}
+						var struct2 = Duplicate(struct1);
+
+						expect(mocktory.isEqual(struct1, struct2)).toBeTrue();
+
+						struct2.b.r.z.d = 7;
+
+						expect(mocktory.isEqual(struct1, struct2)).toBeFalse();
+					});
+
+					it("should compare deep contents of other types", function () {
+						var struct1 = {
+							a: [1, 2, 3],
+							b: new test.Stub()
+						}
+						var struct2 = struct1.copy(); // Shallow copy.
+
+						expect(mocktory.isEqual(struct1, struct2)).toBeTrue();
+
+						struct2.a.append(4);
+						expect(mocktory.isEqual(struct1, struct2)).toBeFalse();
+
+						struct1.a.append(4);
+						expect(mocktory.isEqual(struct1, struct2)).toBeTrue();
+
+						struct1.b = new test.Stub();
+						expect(mocktory.isEqual(struct1, struct2)).toBeFalse();
+					});
+
+				});
+
+				describe("arrays", function () {
+
+					it("should compare empty structs", function () {
+						expect(mocktory.isEqual([], [])).toBeTrue();
+					});
+
+					it("should compare simple contents", function () {
+						var array1 = [1, 2, 3];
+						var array2 = Duplicate(array1);
+
+						expect(mocktory.isEqual(array1, array2)).toBeTrue();
+
+						array2.append(4);
+
+						expect(mocktory.isEqual(array1, array2)).toBeFalse();
+
+						array1.append(4);
+
+						expect(mocktory.isEqual(array1, array2)).toBeTrue();
+
+						array1.deleteAt(1);
+
+						expect(mocktory.isEqual(array1, array2)).toBeFalse();
+					});
+
+					it("should compare deep contents", function () {
+						var array1 = [
+							1,
+							[2, 3],
+							[4, 5],
+							[
+								6,
+								[7, 8, 9],
+								10
+							]
+						];
+						var array2 = Duplicate(array1);
+						expect(mocktory.isEqual(array1, array2)).toBeTrue();
+					});
+
+				});
+
+				describe("queries", function () {
+
+					it("should be implemented", function () {
+						fail("TODO");
+					});
+
+				});
+
+				describe("XML nodes", function () {
+
+					it("should be implemented", function () {
+						fail("TODO");
+					});
+
+				});
+
+			});
+
+		});
 
 	}
 

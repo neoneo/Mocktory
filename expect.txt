@@ -1,0 +1,27 @@
+{
+	$class: "Person",
+	age: {
+		$returns: 42,
+		$times: 2
+	},
+	$expect: {
+		$keys: ["prop"],
+		prop: {
+			$type: "struct",
+			$keys: ["x", "y"],
+			x: {
+				$type: ["array", "moet array zijn"],
+				$length: [3, "moet wel 3 lang zijn"],
+				$items: {
+					$match: "[a-f0-9]+"
+					// verwachting voor ieder element
+				}
+			},
+			y: {
+				$type: "ontrack.domain.contract.Participant",
+				$same: p2
+				// $is: [1,2,3]
+			}
+		}
+	}
+}
