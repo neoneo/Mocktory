@@ -139,7 +139,7 @@ component {
 					descriptors.append({$returns: JavaCast("null", 0)});
 				} else if (IsStruct(result)) {
 					if (this.isResultDescriptor(result)) {
-						descriptors.append(result);
+						descriptors.append(this.mockResults(result));
 					} else {
 						var value = this.isMockDescriptor(result) ? this.mock(result) : result;
 						descriptors.append({$returns: value});
@@ -150,14 +150,14 @@ component {
 						if (IsStruct(result[1])) {
 							if (this.isResultDescriptor(result[1])) {
 								// An array of result descriptors maps to the mocking of multiple calls (different sets of arguments).
-								descriptors = result;
+								descriptors = result.map(function (result) {
+									return this.mockResults(arguments.result);
+								});
 							} else if (this.isMockDescriptor(result[1])) {
 								// Return an array of mock objects.
-								descriptors.append({
-									$returns: result.map(function (descriptor) {
-										return this.mock(arguments.descriptor);
-									})
-								});
+								descriptors.append(this.mockResults({
+									$returns: result
+								}));
 							} else {
 								// Array of regular structs (or things that look like structs).
 								descriptors.append({$returns: result});
@@ -201,6 +201,29 @@ component {
 		}
 
 		return mockDescriptor;
+	}
+
+	/**
+	 * Returns a copy of the result descriptor with mock descriptors replaced by mock objects.
+	 */
+	private Struct function mockResults(required Struct descriptor) {
+		var resultDescriptor = Duplicate(arguments.descriptor, false);
+
+		if (resultDescriptor.keyExists("$results")) {
+			resultDescriptor.$results = resultDescriptor.$results.map(function (result) {
+				if (this.isMockDescriptor(arguments.result)) {
+					return this.mock(arguments.result);
+				} else {
+					return arguments.result;
+				}
+			});
+		} else if (resultDescriptor.keyExists("$returns")) {
+			if (this.isMockDescriptor(resultDescriptor.$returns)) {
+				resultDescriptor.$returns = this.mock(resultDescriptor.$returns);
+			}
+		}
+
+		return resultDescriptor;
 	}
 
 	private void function mockFunction(required Any object, required String name, required Struct descriptor) {
