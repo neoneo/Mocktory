@@ -281,6 +281,50 @@ component extends="testbox.system.BaseSpec" {
 							expect(callLog.$results[1]).toBe([descriptor.existingMethod.$returns]);
 						});
 
+						it("should mock a single mock object if the $returns key contains a mock descriptor", function () {
+							descriptor = {
+								$class: "test.Stub",
+								existingMethod: {
+									$returns: {
+										$class: "test.Stub"
+									}
+								}
+							}
+
+							var mock = mocktory.mock(descriptor);
+
+							var callLog = mock.$callLog();
+							expect(mock.$count("$")).toBe(1);
+							expect(callLog.$[1][1]).toBe("existingMethod");
+							expect(mock.$count("$results")).toBe(1);
+							expect(callLog.$results[1]).toHaveLength(1);
+							expect(callLog.$results[1][1]).toBeInstanceOf("test.Stub");
+						});
+
+						it("should mock an array of mock objects if the $returns key contains an array of mock descriptors", function () {
+							descriptor = {
+								$class: "test.Stub",
+								existingMethod: {
+									$returns: [
+										{$class: "test.Stub"},
+										{$class: "test.Stub"}
+									]
+								}
+							}
+
+							var mock = mocktory.mock(descriptor);
+
+							var callLog = mock.$callLog();
+							expect(mock.$count("$")).toBe(1);
+							expect(callLog.$[1][1]).toBe("existingMethod");
+							expect(mock.$count("$results")).toBe(1);
+							expect(callLog.$results[1]).toHaveLength(1);
+							expect(callLog.$results[1][1]).toBeArray();
+							expect(callLog.$results[1][1]).toHaveLength(2);
+							expect(callLog.$results[1][1][1]).toBeInstanceOf("test.Stub");
+							expect(callLog.$results[1][1][2]).toBeInstanceOf("test.Stub");
+						});
+
 						it("should mock multiple results with the $results key", function () {
 							descriptor = {
 								$class: "test.Stub",
@@ -296,6 +340,48 @@ component extends="testbox.system.BaseSpec" {
 							expect(callLog.$[1][1]).toBe("existingMethod");
 							expect(mock.$count("$results")).toBe(1);
 							expect(callLog.$results[1]).toBe(descriptor.existingMethod.$results);
+						});
+
+						it("should mock a single mock object if the $results key contains a mock descriptor", function () {
+							descriptor = {
+								$class: "test.Stub",
+								existingMethod: {
+									$results: [
+										{$class: "test.Stub"}
+									]
+								}
+							}
+
+							var mock = mocktory.mock(descriptor);
+
+							var callLog = mock.$callLog();
+							expect(mock.$count("$")).toBe(1);
+							expect(callLog.$[1][1]).toBe("existingMethod");
+							expect(mock.$count("$results")).toBe(1);
+							expect(callLog.$results[1]).toHaveLength(1);
+							expect(callLog.$results[1][1]).toBeInstanceOf("test.Stub");
+						});
+
+						it("should mock multiple mock objects if the $results key contains an array of mock descriptors", function () {
+							descriptor = {
+								$class: "test.Stub",
+								existingMethod: {
+									$results: [
+										{$class: "test.Stub"},
+										{$class: "test.Stub"}
+									]
+								}
+							}
+
+							var mock = mocktory.mock(descriptor);
+
+							var callLog = mock.$callLog();
+							expect(mock.$count("$")).toBe(1);
+							expect(callLog.$[1][1]).toBe("existingMethod");
+							expect(mock.$count("$results")).toBe(1);
+							expect(callLog.$results[1]).toHaveLength(2);
+							expect(callLog.$results[1][1]).toBeInstanceOf("test.Stub");
+							expect(callLog.$results[1][2]).toBeInstanceOf("test.Stub");
 						});
 
 						it("should mock a callback using the $callback key", function () {
@@ -698,6 +784,60 @@ component extends="testbox.system.BaseSpec" {
 
 					it("should be implemented", function () {
 						fail("TODO");
+					});
+
+				});
+
+				describe("with a generic data type specified", function () {
+
+					it("should test if the value is of type any if the data type is '{any}'", function () {
+						expect(mocktory.isEqual("{any}", 1)).toBeTrue();
+						expect(mocktory.isEqual("{any}", "a string")).toBeTrue();
+						expect(mocktory.isEqual("{any}", {})).toBeTrue();
+						expect(mocktory.isEqual("{any}", [])).toBeTrue();
+						expect(mocktory.isEqual("{any}", CreateObject("java", "java.lang.System"))).toBeTrue();
+					});
+
+					it("should test if the value is an array if the data type is '{array}'", function () {
+						expect(mocktory.isEqual("{array}", [])).toBeTrue();
+						expect(mocktory.isEqual("{array}", [1, 2])).toBeTrue();
+						expect(mocktory.isEqual("{array}", ["a", "b"])).toBeTrue();
+						expect(mocktory.isEqual("{array}", "a string")).toBeFalse();
+					});
+
+					it("should test if the value is a boolean if the data type is '{boolean}'", function () {
+						expect(mocktory.isEqual("{boolean}", true)).toBeTrue();
+						expect(mocktory.isEqual("{boolean}", false)).toBeTrue();
+						expect(mocktory.isEqual("{boolean}", "yes")).toBeTrue();
+						expect(mocktory.isEqual("{boolean}", "no")).toBeTrue();
+						expect(mocktory.isEqual("{boolean}", "a string")).toBeFalse();
+					});
+
+					it("should test if the value is a component if the data type is '{component}'", function () {
+						expect(mocktory.isEqual("{component}", new test.Stub())).toBeTrue();
+						expect(mocktory.isEqual("{component}", CreateObject("java", "java.lang.System"))).toBeFalse();
+					});
+
+					it("should test if the value is a date or time if the data type is '{date}'", function () {
+						expect(mocktory.isEqual("{date}", Now())).toBeTrue();
+						expect(mocktory.isEqual("{date}", "23:54:42")).toBeTrue();
+						expect(mocktory.isEqual("{date}", "a string")).toBeFalse();
+					});
+
+					it("should test if the value is numeric if the data type is '{numeric}'", function () {
+						expect(mocktory.isEqual("{numeric}", 12)).toBeTrue();
+						expect(mocktory.isEqual("{numeric}", "a string")).toBeFalse();
+					});
+
+					it("should test if the value is a query if the data type is '{query}'", function () {
+						expect(mocktory.isEqual("{query}", QueryNew("id"))).toBeTrue();
+					});
+
+					it("should test if the value is a struct if the data type is '{struct}'", function () {
+						expect(mocktory.isEqual("{struct}", {})).toBeTrue();
+						expect(mocktory.isEqual("{struct}", {a: 1, b: 2})).toBeTrue();
+						expect(mocktory.isEqual("{struct}", {1: "a", 2: "b"})).toBeTrue();
+						expect(mocktory.isEqual("{struct}", "a string")).toBeFalse();
 					});
 
 				});

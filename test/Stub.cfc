@@ -1,6 +1,6 @@
 component {
 
-	public String function existingMethod(required Numeric count) {}
+	public Any function existingMethod(required Numeric count) {}
 
 	public void function voidMethod(required Numeric count) {}
 

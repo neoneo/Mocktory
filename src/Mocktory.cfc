@@ -81,14 +81,14 @@ component {
 		return object;
 	}
 
-	public Boolean function isMockDescriptor(required Struct descriptor) {
-		return !IsObject(arguments.descriptor) && arguments.descriptor.some(function (key) {
+	public Boolean function isMockDescriptor(required Any descriptor) {
+		return IsStruct(arguments.descriptor) && !IsObject(arguments.descriptor) && arguments.descriptor.some(function (key) {
 			return this.isMockKey(arguments.key);
 		});
 	}
 
-	public Boolean function isResultDescriptor(required Struct descriptor) {
-		return !IsObject(arguments.descriptor) && arguments.descriptor.some(function (key) {
+	public Boolean function isResultDescriptor(required Any descriptor) {
+		return IsStruct(arguments.descriptor) && !IsObject(arguments.descriptor) && arguments.descriptor.some(function (key) {
 			return this.isResultKey(arguments.key);
 		});
 	}
@@ -101,7 +101,7 @@ component {
 		return this.resultKeys.find(arguments.key) > 0;
 	}
 
-	private Boolean function isFunction(required Any object, required String name) {
+	public Boolean function isFunction(required Any object, required String name) {
 		return GetMetadata(arguments.object).findKey("functions", "all").some(function (result) {
 			// Each result has a value key that contains an array of function metadata structs.
 			return arguments.result.value.some(function (metadata) {
@@ -136,42 +136,37 @@ component {
 				var result = mockDescriptor[key] ?: JavaCast("null", 0);
 				var descriptors = []; // Array of result descriptors for this function (will have length 1 in all except 1 case).
 				if (IsNull(result)) {
+
 					descriptors.append({$returns: JavaCast("null", 0)});
-				} else if (IsStruct(result)) {
-					if (this.isResultDescriptor(result)) {
-						descriptors.append(this.mockResults(result));
+
+				} else if (this.isResultDescriptor(result)) {
+
+					descriptors.append(this.mockResults(result));
+
+				} else if (this.isMockDescriptor(result)) {
+
+					descriptors.append({$returns: this.mock(result)});
+
+				} else if (IsArray(result) && !ArrayIsEmpty(result)) {
+					// Just check the first element. If it is some descriptor we assume all of them are of the same type.
+					if (this.isResultDescriptor(result[1])) {
+						// An array of result descriptors maps to the mocking of multiple calls (different sets of arguments).
+						descriptors = result.map(function (result) {
+							return this.mockResults(arguments.result);
+						});
+					} else if (this.isMockDescriptor(result[1])) {
+						// Return an array of mock objects.
+						descriptors.append(this.mockResults({
+							$returns: result
+						}));
 					} else {
-						var value = this.isMockDescriptor(result) ? this.mock(result) : result;
-						descriptors.append({$returns: value});
-					}
-				} else if (IsArray(result)) {
-					if (!result.isEmpty()) {
-						// Just check the first element. If it is some descriptor we assume all of them are of the same type.
-						if (IsStruct(result[1])) {
-							if (this.isResultDescriptor(result[1])) {
-								// An array of result descriptors maps to the mocking of multiple calls (different sets of arguments).
-								descriptors = result.map(function (result) {
-									return this.mockResults(arguments.result);
-								});
-							} else if (this.isMockDescriptor(result[1])) {
-								// Return an array of mock objects.
-								descriptors.append(this.mockResults({
-									$returns: result
-								}));
-							} else {
-								// Array of regular structs (or things that look like structs).
-								descriptors.append({$returns: result});
-							}
-						} else {
-							// The array contains something else.
-							descriptors.append({$returns: result});
-						}
-					} else {
-						// Empty array.
+						// Array of something else.
 						descriptors.append({$returns: result});
 					}
 				} else if (IsCustomFunction(result) || IsClosure(result)) {
+
 					descriptors.append({$callback: result});
+
 				} else {
 					// It's a value of some other type.
 					descriptors.append({$returns: result});
@@ -220,6 +215,10 @@ component {
 		} else if (resultDescriptor.keyExists("$returns")) {
 			if (this.isMockDescriptor(resultDescriptor.$returns)) {
 				resultDescriptor.$returns = this.mock(resultDescriptor.$returns);
+			} else if (IsArray(resultDescriptor.$returns) && this.isMockDescriptor(resultDescriptor.$returns[1])) {
+				resultDescriptor.$returns = resultDescriptor.$returns.map(function (descriptor) {
+					return this.mock(arguments.descriptor);
+				});
 			}
 		}
 
@@ -305,47 +304,53 @@ component {
 		}, 0);
 	}
 
-	public Boolean function isEqual(required Any value1, required Any value2) {
+	public Boolean function isEqual(required Any expected, required Any actual) {
 
-		if (IsNull(arguments.value1) && IsNull(arguments.value2)) {
+		if (IsNull(arguments.expected) && IsNull(arguments.actual)) {
 			return true;
-		} else if (IsNull(arguments.value1) || IsNull(arguments.value2)) {
+		} else if (IsNull(arguments.expected) || IsNull(arguments.actual)) {
 			return false;
 		}
 
-		local.value1 = arguments.value1;
-		local.value2 = arguments.value2;
+		local.expected = arguments.expected;
+		local.actual = arguments.actual;
 
-		if (IsSimpleValue(value1) && IsSimpleValue(value2)) {
+		// The first value can be a string that specifies a certain datatype (like Mighty Mock).
+		// The second value is always the actual argument.
+		if (IsSimpleValue(expected) && IsValid("regex", expected, "{(any|array|boolean|component|date|numeric|query|struct)}")) {
 
-			return value1 == value2;
+			return IsValid(expected.mid(2, expected.len() - 2), actual);
 
-		} else if (IsObject(value1) && IsObject(value2)) {
+		} else if (IsSimpleValue(expected) && IsSimpleValue(actual)) {
+
+			return expected == actual;
+
+		} else if (IsObject(expected) && IsObject(actual)) {
 
 			var system = CreateObject("java", "java.lang.System");
-			return system.identityHashCode(value1) == system.identityHashCode(value2);
+			return system.identityHashCode(expected) == system.identityHashCode(actual);
 
-		} else if (IsStruct(value1) && IsStruct(value2)) {
+		} else if (IsStruct(expected) && IsStruct(actual)) {
 
-			return value1.len() == value2.len() && value1.every(function (key) {
-				return value2.keyExists(arguments.key) && 	this.isEqual(value1[arguments.key], value2[arguments.key]);
+			return expected.len() == actual.len() && expected.every(function (key) {
+				return actual.keyExists(arguments.key) && this.isEqual(expected[arguments.key], actual[arguments.key]);
 			});
 
-		} else if (IsArray(value1) && IsArray(value2)) {
+		} else if (IsArray(expected) && IsArray(actual)) {
 
-			return value1.len() == value2.len() && value1.every(function (_, index) {
-				return this.isEqual(value1[arguments.index], value2[arguments.index]);
+			return expected.len() == actual.len() && expected.every(function (_, index) {
+				return this.isEqual(expected[arguments.index], actual[arguments.index]);
 			});
 
-		} else if (IsQuery(value1) && IsQuery(value2)) {
+		} else if (IsQuery(expected) && IsQuery(actual)) {
 
-			if (value1.recordCount() == value2.recordCount() && value1.columnList() == value2.columnList()) {
-				return Compare(SerializeJSON(value1), SerializeJSON(value2)) == 0;
+			if (expected.recordCount() == actual.recordCount() && expected.columnList() == actual.columnList()) {
+				return Compare(SerializeJSON(expected), SerializeJSON(actual)) == 0;
 			}
 
-		} else if (IsXMLDoc(value1) && IsXMLDoc(value2) || IsXMLElem(value1) && IsXMLElem(value2)) {
+		} else if (IsXMLDoc(expected) && IsXMLDoc(actual) || IsXMLElem(expected) && IsXMLElem(actual)) {
 
-			return ToString(value1) == ToString(value2);
+			return ToString(expected) == ToString(actual);
 
 		}
 
