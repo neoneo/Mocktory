@@ -7,7 +7,7 @@ import testbox.system.MockBox;
 component {
 
 	this.mockKeys = ["$object", "$class", "$interface"];
-	this.resultKeys = ["$results", "$callback", "$returns", "$args"];
+	this.resultKeys = ["$results", "$callback", "$returns", "$args", "$times", "$atLeast", "$atMost", "$between"];
 	// Struct of comparisons and numbers of arguments.
 	this.comparisons = {
 		$times: 1,
@@ -215,7 +215,7 @@ component {
 		} else if (resultDescriptor.keyExists("$returns")) {
 			if (this.isMockDescriptor(resultDescriptor.$returns)) {
 				resultDescriptor.$returns = this.mock(resultDescriptor.$returns);
-			} else if (IsArray(resultDescriptor.$returns) && this.isMockDescriptor(resultDescriptor.$returns[1])) {
+			} else if (IsArray(resultDescriptor.$returns) && !resultDescriptor.$returns.isEmpty() && this.isMockDescriptor(resultDescriptor.$returns[1])) {
 				resultDescriptor.$returns = resultDescriptor.$returns.map(function (descriptor) {
 					return this.mock(arguments.descriptor);
 				});
@@ -244,6 +244,13 @@ component {
 
 	}
 
+	/**
+	 * Verifies that certain calls were made a certain number of times using given arguments.
+	 * Descriptor can be:
+	 * - A mock descriptor (can be used for any mock)
+	 * - An array of function names (only for Mocktory mocks)
+	 * - A stuct that maps
+	 */
 	public void function verify(required Any mockObject, Struct descriptor) {
 
 		var mockDescriptor = IsNull(arguments.descriptor) ? arguments.mockObject._mockDescriptor : this.normalize(arguments.descriptor);
@@ -317,7 +324,7 @@ component {
 
 		// The first value can be a string that specifies a certain datatype (like Mighty Mock).
 		// The second value is always the actual argument.
-		if (IsSimpleValue(expected) && IsValid("regex", expected, "{(any|array|boolean|component|date|numeric|query|struct)}")) {
+		if (IsSimpleValue(expected) && IsValid("regex", expected, "{(any|array|boolean|component|date|numeric|query|string|struct)}")) {
 
 			return IsValid(expected.mid(2, expected.len() - 2), actual);
 
@@ -333,13 +340,13 @@ component {
 		} else if (IsStruct(expected) && IsStruct(actual)) {
 
 			return expected.len() == actual.len() && expected.every(function (key) {
-				return actual.keyExists(arguments.key) && this.isEqual(expected[arguments.key], actual[arguments.key]);
+				return this.isEqual(expected[arguments.key] ?: JavaCast("null", 0), actual[arguments.key] ?: JavaCast("null", 0));
 			});
 
 		} else if (IsArray(expected) && IsArray(actual)) {
 
 			return expected.len() == actual.len() && expected.every(function (_, index) {
-				return this.isEqual(expected[arguments.index], actual[arguments.index]);
+				return  this.isEqual(expected[arguments.index ?: JavaCast("null", 0)], actual[arguments.index] ?: JavaCast("null", 0));
 			});
 
 		} else if (IsQuery(expected) && IsQuery(actual)) {

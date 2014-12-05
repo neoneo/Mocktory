@@ -213,6 +213,45 @@ component extends="testbox.system.BaseSpec" {
 						expect(IsNull(callArgs[3].$returns)).toBeTrue();
 					});
 
+					it("should mock functions that return an empty array", function () {
+						descriptor = {
+							$class: "test.Stub",
+							existingMethod: []
+						}
+
+						var mock = mocktory.mock(descriptor);
+
+						expect(mocktory.$count("mockFunction")).toBe(1);
+						var callArgs = mocktory.$callLog().mockFunction[1];
+						expect(callArgs[3].$returns).toBe([]);
+					});
+
+					it("should mock functions that return an array", function () {
+						descriptor = {
+							$class: "test.Stub",
+							existingMethod: [1, 2, 3]
+						}
+
+						var mock = mocktory.mock(descriptor);
+
+						expect(mocktory.$count("mockFunction")).toBe(1);
+						var callArgs = mocktory.$callLog().mockFunction[1];
+						expect(callArgs[3].$returns).toBe([1, 2, 3]);
+					});
+
+					it("should mock functions that return a struct", function () {
+						descriptor = {
+							$class: "test.Stub",
+							existingMethod: {}
+						}
+
+						var mock = mocktory.mock(descriptor);
+
+						expect(mocktory.$count("mockFunction")).toBe(1);
+						var callArgs = mocktory.$callLog().mockFunction[1];
+						expect(callArgs[3].$returns).toBe({});
+					});
+
 					it("should mock functions based on a single result descriptor", function () {
 						descriptor = {
 							$class: "test.Stub",
@@ -686,6 +725,13 @@ component extends="testbox.system.BaseSpec" {
 						expect(mocktory.isEqual(struct1, struct2)).toBeFalse();
 					});
 
+					it("should compare structs containing nulls", function () {
+						var struct1 = {a: JavaCast("null", 0), b: 1}
+						var struct2 = Duplicate(struct1);
+
+						expect(mocktory.isEqual(struct1, struct2)).toBeTrue();
+					});
+
 					it("should compare deep contents", function () {
 						var struct1 = {
 							a: 1,
@@ -732,7 +778,7 @@ component extends="testbox.system.BaseSpec" {
 
 				describe("arrays", function () {
 
-					it("should compare empty structs", function () {
+					it("should compare empty arrays", function () {
 						expect(mocktory.isEqual([], [])).toBeTrue();
 					});
 
@@ -751,6 +797,18 @@ component extends="testbox.system.BaseSpec" {
 						expect(mocktory.isEqual(array1, array2)).toBeTrue();
 
 						array1.deleteAt(1);
+
+						expect(mocktory.isEqual(array1, array2)).toBeFalse();
+					});
+
+					it("should compare arrays containing nulls", function () {
+						var array1 = [JavaCast("null", 0)];
+						var array2 = [JavaCast("null", 0)];
+
+						expect(mocktory.isEqual(array1, array2)).toBeTrue();
+
+						array1.append(1);
+						array2.prepend(1);
 
 						expect(mocktory.isEqual(array1, array2)).toBeFalse();
 					});
