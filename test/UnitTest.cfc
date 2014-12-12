@@ -174,7 +174,7 @@ component extends="testbox.system.BaseSpec" {
 						expect(callArgs[2]).toBe("getproperty");
 					});
 
-					it("should mock the function if there exists a function by the given key", function () {
+					it("should mock the function if a function by the given key is defined in the object", function () {
 						descriptor = {
 							$class: "test.Stub",
 							existingMethod: "value"
@@ -185,6 +185,19 @@ component extends="testbox.system.BaseSpec" {
 						expect(mocktory.$count("mockFunction")).toBe(1);
 						var callArgs = mocktory.$callLog().mockFunction[1];
 						expect(callArgs[2]).toBe("existingMethod");
+					});
+
+					it("should mock the function if a function by the given key is mixed into the object", function () {
+						descriptor = {
+							$class: "test.Stub",
+							mixedin: "mocked"
+						}
+						var mock = mocktory.mock(descriptor);
+
+						expect(mocktory.$count("mockFunction")).toBe(1);
+						var callArgs = mocktory.$callLog().mockFunction[1];
+						expect(callArgs[2]).toBe("mixedin");
+						expect(callArgs[3]).toBe({$returns: "mocked"});
 					});
 
 					it("should create result descriptors for simple values", function () {

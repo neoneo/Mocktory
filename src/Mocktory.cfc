@@ -102,12 +102,17 @@ component {
 	}
 
 	public Boolean function isFunction(required Any object, required String name) {
-		return GetMetadata(arguments.object).findKey("functions", "all").some(function (result) {
+		// First test for existence in the metadata. This covers any method defined in the component.
+		// Mixed in methods are absent from the metadata, so for those we check the object directly.
+		// Unfortunately, that increases the call count if invokeImplicitAccessor is set.
+		var result = GetMetadata(arguments.object).findKey("functions", "all").some(function (result) {
 			// Each result has a value key that contains an array of function metadata structs.
 			return arguments.result.value.some(function (metadata) {
 				return arguments.metadata.name == name;
 			});
 		});
+
+		return result || StructKeyExists(arguments.object, arguments.name) && (IsCustomFunction(arguments.object[arguments.name]) || IsClosure(arguments.object[arguments.name]));
 	}
 
 	/**
