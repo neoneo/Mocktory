@@ -250,11 +250,8 @@ component {
 	}
 
 	/**
-	 * Verifies that certain calls were made a certain number of times using given arguments.
-	 * Descriptor can be:
-	 * - A mock descriptor (can be used for any mock)
-	 * - An array of function names (only for Mocktory mocks)
-	 * - A stuct that maps
+	 * Verifies that certain calls were made a certain number of times.
+	 * The descriptor is optional for Mocktory mocks, and required for regular mocks.
 	 */
 	public void function verify(required Any mockObject, Struct descriptor) {
 
@@ -329,7 +326,7 @@ component {
 
 		// The first value can be a string that specifies a certain datatype (like Mighty Mock).
 		// The second value is always the actual argument.
-		if (IsSimpleValue(expected) && IsValid("regex", expected, "{(any|array|boolean|component|date|numeric|query|string|struct)}")) {
+		if (IsSimpleValue(expected) && IsValid("regex", expected, "{(any|array|boolean|component|date|numeric|query|string|struct|xml)}")) {
 
 			return IsValid(expected.mid(2, expected.len() - 2), actual);
 
