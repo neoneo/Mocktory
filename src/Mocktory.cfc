@@ -263,9 +263,11 @@ component {
 				for (var descriptor in mockDescriptor[key]) {
 					var functionName = this.isFunction(arguments.mockObject, key) ? key : "get" & key;
 					// Test for existence of one of the comparison types. The values are arrays of comparison values and messages.
+					var count = this.callCount(arguments.mockObject, functionName, descriptor.$args ?: NullValue());
+					var hasComparison = false;
 					for (var comparison in ["$times", "$atLeast", "$atMost", "$between"]) {
 						if (descriptor.keyExists(comparison)) {
-							var count = this.callCount(arguments.mockObject, functionName, descriptor.$args ?: NullValue());
+							hasComparison = true;
 							if (comparison == "$times") {
 								this.assert.isEqual(descriptor.$times[1], count, descriptor.$times[2]);
 							} else if (comparison == "$atLeast") {
@@ -279,6 +281,9 @@ component {
 
 							break;
 						}
+					}
+					if (!hasComparison) {
+						this.assert.isEqual(1, count);
 					}
 				}
 			}
